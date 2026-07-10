@@ -10,7 +10,73 @@ The project will be built as a Next.js and TypeScript application. The first pha
 
 ## Current Status
 
-Cuerre is in repository setup. The application scaffold, package installation, styling system, tests, CI, Docker configuration, and deployment workflows are intentionally deferred to later setup steps.
+Cuerre has a minimal Next.js and TypeScript scaffold. Styling system setup, tests, CI, Docker configuration, deployment workflows, and QR generation features are intentionally deferred to later setup steps.
+
+## Local Development
+
+Start by forking the repository on GitHub, then clone your fork locally:
+
+```bash
+git clone https://github.com/<your-github-username>/cuerre.git
+cd cuerre
+```
+
+Add the original repository as `upstream` so you can keep your fork current:
+
+```bash
+git remote add upstream https://github.com/shal-in/cuerre.git
+git fetch upstream
+```
+
+Create a feature branch from the latest `dev` branch:
+
+```bash
+git checkout dev
+git pull upstream dev
+git checkout -b feature/<short-description>
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the local development server:
+
+```bash
+npm run dev
+```
+
+Open the app at:
+
+```text
+http://localhost:3000
+```
+
+Before opening a pull request, run the local checks:
+
+```bash
+npm run check
+```
+
+Useful commands:
+
+```bash
+npm run format:check
+npm run lint
+npm run typecheck
+npm run build
+npm run format
+npm run start
+```
+
+`npm run start` serves the production build created by `npm run build`.
+
+### Requirements
+
+- Node.js `20.19+`, `22.13+`, or `24+`
+- npm `10+`
 
 ## Phase 1 Roadmap
 
