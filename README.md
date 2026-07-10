@@ -82,11 +82,11 @@ npm run start
 
 Phase 1 is focused on getting a reliable foundation in place before feature development.
 
-1. Repository setup
+1. Repository setup - done
    - Document project purpose, branch strategy, deployment rules, and early roadmap.
    - Avoid app code, package installation, CI configuration, Docker files, and deployment workflows.
 
-2. Next.js and TypeScript scaffold
+2. Next.js and TypeScript scaffold - done
    - Add the minimal Next.js App Router foundation.
    - Include TypeScript, ESLint, npm scripts, and a simple hello world page.
    - Avoid TailwindCSS, shadcn/ui, QR generation logic, Docker, and GitHub Actions.
