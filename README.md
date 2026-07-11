@@ -10,7 +10,7 @@ The project will be built as a Next.js and TypeScript application. The first pha
 
 ## Current Status
 
-Cuerre has a minimal Next.js and TypeScript scaffold with TailwindCSS and shadcn/ui foundation configuration. Tests, CI, Docker configuration, deployment workflows, and QR generation features are intentionally deferred to later setup steps.
+Cuerre has a minimal Next.js and TypeScript scaffold with TailwindCSS, shadcn/ui foundation configuration, and a Vitest component testing foundation. CI, Docker configuration, deployment workflows, and QR generation features are intentionally deferred to later setup steps.
 
 ## Local Development
 
@@ -66,7 +66,9 @@ Useful commands:
 npm run format:check
 npm run lint
 npm run typecheck
+npm run test
 npm run build
+npm run test:watch
 npm run format
 npm run start
 ```
@@ -96,12 +98,12 @@ Phase 1 is focused on getting a reliable foundation in place before feature deve
    - Define base design tokens and shared styling utilities.
    - Avoid feature UI and QR generation logic.
 
-4. Testing foundation - next
+4. Testing foundation - done in PR 4
    - Add Vitest and React Testing Library.
    - Add test scripts and one minimal smoke test.
    - Avoid feature implementation.
 
-5. Continuous integration
+5. Continuous integration - next
    - Add a pull request workflow for install, format check, lint, typecheck, tests, and build.
    - Avoid deployment.
 
