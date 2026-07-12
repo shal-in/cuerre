@@ -1,0 +1,141 @@
+name: Deploy Cloud Run
+
+on:
+  push:
+    branches:
+      - test
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment environment
+        required: true
+        type: choice
+        options:
+          - test
+          - production
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    env:
+      ARTIFACT_REGISTRY_LOCATION: ${{ vars.ARTIFACT_REGISTRY_LOCATION }}
+      ARTIFACT_REGISTRY_REPOSITORY: ${{ vars.ARTIFACT_REGISTRY_REPOSITORY }}
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ vars.GCP_REGION }}
+      IMAGE_NAME: cuerre
+      NEXT_TELEMETRY_DISABLED: "1"
+      WORKLOAD_IDENTITY_PROVIDER: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
+      WORKLOAD_IDENTITY_SERVICE_ACCOUNT: ${{ vars.WORKLOAD_IDENTITY_SERVICE_ACCOUNT }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate deployment configuration
+        run: |
+          missing=0
+
+          for name in \
+            ARTIFACT_REGISTRY_LOCATION \
+            ARTIFACT_REGISTRY_REPOSITORY \
+            GCP_PROJECT_ID \
+            GCP_REGION \
+            WORKLOAD_IDENTITY_PROVIDER \
+            WORKLOAD_IDENTITY_SERVICE_ACCOUNT
+          do
+            if [[ -z "${!name}" ]]; then
+              echo "Missing required GitHub variable: ${name}"
+              missing=1
+            fi
+          done
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            target="${{ inputs.environment }}"
+          elif [[ "${{ github.ref_name }}" == "test" ]]; then
+            target="test"
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            target="production"
+          else
+            echo "Unsupported deployment ref: ${{ github.ref_name }}"
+            missing=1
+          fi
+
+          if [[ "${target}" == "test" && -z "${{ vars.CLOUD_RUN_SERVICE_TEST }}" ]]; then
+            echo "Missing required GitHub variable: CLOUD_RUN_SERVICE_TEST"
+            missing=1
+          fi
+
+          if [[ "${target}" == "production" && -z "${{ vars.CLOUD_RUN_SERVICE_PRODUCTION }}" ]]; then
+            echo "Missing required GitHub variable: CLOUD_RUN_SERVICE_PRODUCTION"
+            missing=1
+          fi
+
+          exit "${missing}"
+
+      - name: Resolve deployment target
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TARGET_ENVIRONMENT="${{ inputs.environment }}"
+          elif [[ "${{ github.ref_name }}" == "test" ]]; then
+            TARGET_ENVIRONMENT="test"
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            TARGET_ENVIRONMENT="production"
+          else
+            echo "Unsupported deployment ref: ${{ github.ref_name }}"
+            exit 1
+          fi
+
+          if [[ "${TARGET_ENVIRONMENT}" == "test" ]]; then
+            CLOUD_RUN_SERVICE="${{ vars.CLOUD_RUN_SERVICE_TEST }}"
+          elif [[ "${TARGET_ENVIRONMENT}" == "production" ]]; then
+            CLOUD_RUN_SERVICE="${{ vars.CLOUD_RUN_SERVICE_PRODUCTION }}"
+          else
+            echo "Unsupported deployment environment: ${TARGET_ENVIRONMENT}"
+            exit 1
+          fi
+
+          IMAGE_URI="${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/${IMAGE_NAME}:${{ github.sha }}"
+
+          echo "CLOUD_RUN_SERVICE=${CLOUD_RUN_SERVICE}" >> "${GITHUB_ENV}"
+          echo "IMAGE_URI=${IMAGE_URI}" >> "${GITHUB_ENV}"
+          echo "TARGET_ENVIRONMENT=${TARGET_ENVIRONMENT}" >> "${GITHUB_ENV}"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.WORKLOAD_IDENTITY_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev" --quiet
+
+      - name: Build image
+        run: docker build -t "${IMAGE_URI}" .
+
+      - name: Push image
+        run: docker push "${IMAGE_URI}"
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v3
+        with:
+          image: ${{ env.IMAGE_URI }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          region: ${{ env.GCP_REGION }}
+          service: ${{ env.CLOUD_RUN_SERVICE }}
+
+      - name: Show service URL
+        run: echo "${TARGET_ENVIRONMENT} deployed to ${{ steps.deploy.outputs.url }}"
