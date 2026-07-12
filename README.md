@@ -10,7 +10,7 @@ The project will be built as a Next.js and TypeScript application. The first pha
 
 ## Current Status
 
-Cuerre has a minimal Next.js and TypeScript scaffold with TailwindCSS, shadcn/ui foundation configuration, a Vitest component testing foundation, pull request CI checks, and a production Dockerfile. Deployment workflows and QR generation features are intentionally deferred to later setup steps.
+Cuerre has a minimal Next.js and TypeScript scaffold with TailwindCSS, shadcn/ui foundation configuration, a Vitest component testing foundation, pull request CI checks, a production Dockerfile, and Cloud Run deployment workflow scaffolding. QR generation features are intentionally deferred to later setup steps.
 
 ## Local Development
 
@@ -95,6 +95,36 @@ Open the app at:
 http://localhost:3000
 ```
 
+## Cloud Run Deployment
+
+The deployment workflow builds the Docker image, pushes it to Artifact Registry, and deploys it to Cloud Run.
+
+Deployment branches:
+
+- `test` deploys to the test Cloud Run service.
+- `main` deploys to the production Cloud Run service.
+
+Required GitHub repository variables:
+
+```text
+ARTIFACT_REGISTRY_LOCATION
+ARTIFACT_REGISTRY_REPOSITORY
+CLOUD_RUN_SERVICE_PRODUCTION
+CLOUD_RUN_SERVICE_TEST
+GCP_PROJECT_ID
+GCP_REGION
+WORKLOAD_IDENTITY_PROVIDER
+WORKLOAD_IDENTITY_SERVICE_ACCOUNT
+```
+
+The Google Cloud service account used by GitHub Actions needs permission to push images to Artifact Registry and deploy Cloud Run services. The workflow uses Workload Identity Federation, not a long-lived service account key.
+
+Minimum Google Cloud permissions for the deployment service account:
+
+- Artifact Registry Writer
+- Cloud Run Admin
+- Service Account User on the runtime service account used by Cloud Run
+
 ### Requirements
 
 - Node.js `20.19+`, `22.13+`, or `24+`
@@ -132,7 +162,7 @@ Phase 1 is focused on getting a reliable foundation in place before feature deve
    - Document local Docker build and run commands.
    - Avoid deployment workflows.
 
-7. Cloud Run deployment - next
+7. Cloud Run deployment - done in PR 7
    - Deploy `test` to the test environment.
    - Deploy `main` to the production environment.
    - Document required environment variables and promotion rules.
