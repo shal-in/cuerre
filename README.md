@@ -10,7 +10,7 @@ The project will be built as a Next.js and TypeScript application. The first pha
 
 ## Current Status
 
-Cuerre has a minimal Next.js and TypeScript scaffold with TailwindCSS, shadcn/ui foundation configuration, a Vitest component testing foundation, and pull request CI checks. Docker configuration, deployment workflows, and QR generation features are intentionally deferred to later setup steps.
+Cuerre has a minimal Next.js and TypeScript scaffold with TailwindCSS, shadcn/ui foundation configuration, a Vitest component testing foundation, pull request CI checks, and a production Dockerfile. Deployment workflows and QR generation features are intentionally deferred to later setup steps.
 
 ## Local Development
 
@@ -75,6 +75,26 @@ npm run start
 
 `npm run start` serves the production build created by `npm run build`.
 
+## Docker
+
+Build the production image locally:
+
+```bash
+docker build -t cuerre:local .
+```
+
+Run the production container:
+
+```bash
+docker run --rm -p 3000:3000 cuerre:local
+```
+
+Open the app at:
+
+```text
+http://localhost:3000
+```
+
 ### Requirements
 
 - Node.js `20.19+`, `22.13+`, or `24+`
@@ -107,12 +127,12 @@ Phase 1 is focused on getting a reliable foundation in place before feature deve
    - Add a pull request workflow for install, format check, lint, typecheck, tests, and build.
    - Avoid deployment.
 
-6. Docker foundation - next
+6. Docker foundation - done in PR 6
    - Add a production Dockerfile and `.dockerignore`.
    - Document local Docker build and run commands.
    - Avoid deployment workflows.
 
-7. Cloud Run deployment
+7. Cloud Run deployment - next
    - Deploy `test` to the test environment.
    - Deploy `main` to the production environment.
    - Document required environment variables and promotion rules.
